@@ -2,6 +2,7 @@ import 'package:equb/admin/domain/models/transaction/transactionModel.dart';
 import 'package:equb/auth/service/authService.dart';
 import 'package:equb/commen/screens/widgets/textWidget.dart';
 import 'package:equb/commen/services/walletService.dart';
+import 'package:equb/sales/domain/services/salesService.dart';
 import 'package:equb/theme/appColor.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -17,6 +18,7 @@ class SalesWallet extends StatefulWidget {
 class _SalesWallet extends State<SalesWallet> {
   final _walletController = Get.find<WalletService>();
   final _authController = Get.find<AuthService>();
+  final _salesService = Get.find<SalesService>();
 
   final _amountController = TextEditingController();
 
@@ -163,16 +165,7 @@ class _SalesWallet extends State<SalesWallet> {
                     color: AppColor.black,
                   ),
                 ),
-                SizedBox(
-                  height: Get.height * 0.02,
-                ),
-                SizedBox(
-                  width: Get.width * 0.9,
-                  child: inputField(
-                      controller: _phoneController,
-                      hint: "መለያ ቁጥር",
-                      icon: Icons.account_balance_rounded),
-                ),
+
                 SizedBox(
                   height: Get.height * 0.02,
                 ),
@@ -221,14 +214,16 @@ class _SalesWallet extends State<SalesWallet> {
                                 _walletController
                                     .transferToUser(TransactionModel(
                                   amount: double.parse(_amountController.text),
-                                  receiverAccount: _phoneController.text,
+                                  receiverAccount:
+                                      _salesService.searchResult!.id,
                                   senderAccount:
-                                      _walletController.myWallet!.account,
+                                      _walletController.myWallet!.userId,
                                 ));
                               }
                               if (_walletController.isLoading) {
                                 _amountController.clear();
                                 _phoneController.clear();
+                                _salesService.searchResult = null;
                                 Get.back();
                               }
                             },

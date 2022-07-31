@@ -3,8 +3,8 @@ import 'dart:convert';
 class TransactionModel {
   int? id;
   double? amount;
-  String? senderAccount;
-  String? receiverAccount;
+  int? senderAccount;
+  int? receiverAccount;
   String? transactionDate;
   String? transactionType;
   String? createdBy;
@@ -27,8 +27,8 @@ class TransactionModel {
   TransactionModel copyWith({
     int? id,
     double? amount,
-    String? senderAccount,
-    String? receiverAccount,
+    int? senderAccount,
+    int? receiverAccount,
     String? transactionDate,
     String? transactionType,
     String? createdBy,

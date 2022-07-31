@@ -80,7 +80,7 @@ class SalesService extends GetxController {
   searchUser(String phone) async {
     try {
       final result = await SalesRepo().searchUser(phone);
-      if (result != null) {
+      if (result.id != null) {
         _searchResult.value = result;
       } else {
         _searchResult.value = null;

@@ -1,9 +1,12 @@
 import 'package:equb/admin/domain/models/transaction/transactionModel.dart';
 import 'package:equb/auth/service/authService.dart';
+import 'package:equb/commen/models/userDetailModel.dart';
 import 'package:equb/commen/screens/widgets/textWidget.dart';
 import 'package:equb/commen/services/walletService.dart';
+import 'package:equb/sales/domain/services/salesService.dart';
 import 'package:equb/theme/appColor.dart';
 import 'package:equb/theme/theme.dart';
+import 'package:equb/utils/formating.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -18,18 +21,21 @@ class AgentWallet extends StatefulWidget {
 class _MainCollectorWalletScreenState extends State<AgentWallet> {
   final _walletService = Get.find<WalletService>();
   final _authService = Get.find<AuthService>();
+  final _salesService = Get.find<SalesService>();
 
   final _amountController = TextEditingController();
 
   final _phoneController = TextEditingController();
 
   final _remarkController = TextEditingController();
+  final _searchController = TextEditingController();
 
   final _globalKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     _walletService.getTransactionHistory(_authService.userInfo!.id.toString());
+
     return Scaffold(
       floatingActionButton: FloatingActionButton(
           heroTag: "transferto",
@@ -166,14 +172,50 @@ class _MainCollectorWalletScreenState extends State<AgentWallet> {
                 ),
                 SizedBox(
                   width: Get.width * 0.9,
-                  child: inputField(
-                      controller: _phoneController,
-                      hint: "መለያ ቁጥር",
-                      icon: Icons.account_balance_rounded),
+                  child: ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.person,
+                      color: AppColor.darkGray,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColor.lightBlue),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 20, horizontal: 10),
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(15))),
+                    ),
+                    onPressed: () {
+                      {
+                        handelSearchUser();
+                      }
+                    },
+                    label: Container(
+                      alignment: Alignment.centerLeft,
+                      margin: const EdgeInsets.only(left: 10),
+                      child: Obx(
+                        () => TextWidget(
+                          label: _salesService.searchResult == null
+                              ? "እቁብ ጣይ"
+                              : _salesService
+                                      .searchResult!.userProfile!.firstName
+                                      .toString() +
+                                  " " +
+                                  _salesService
+                                      .searchResult!.userProfile!.lastName
+                                      .toString(),
+                          txa: TextAlign.start,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
                 SizedBox(
                   height: Get.height * 0.02,
                 ),
+
                 SizedBox(
                   width: Get.width * 0.9,
                   child: inputField(
@@ -218,14 +260,15 @@ class _MainCollectorWalletScreenState extends State<AgentWallet> {
                               if (_globalKey.currentState!.validate()) {
                                 _walletService.transferToUser(TransactionModel(
                                   amount: double.parse(_amountController.text),
-                                  receiverAccount: _phoneController.text,
+                                  receiverAccount:
+                                      _salesService.searchResult!.id,
                                   senderAccount:
-                                      _walletService.myWallet!.account,
+                                      _walletService.myWallet!.userId,
                                 ));
                               }
                               if (_walletService.isRefund) {
                                 _amountController.clear();
-                                _phoneController.clear();
+                                _salesService.searchResult = null;
                                 Get.back();
                                 _walletService.isRefund = false;
                               }
@@ -269,11 +312,11 @@ class _MainCollectorWalletScreenState extends State<AgentWallet> {
         labelText: hint,
         focusedBorder: OutlineInputBorder(
           borderSide: BorderSide(color: AppColor.primaryColor),
-          borderRadius: BorderRadius.circular(25.0),
+          borderRadius: BorderRadius.circular(15.0),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(25.0),
-          borderSide: BorderSide(color: AppColor.primaryColor),
+          borderRadius: BorderRadius.circular(15.0),
+          borderSide: BorderSide(color: AppColor.lightBlue),
         ),
       ),
     );
@@ -359,6 +402,113 @@ class _MainCollectorWalletScreenState extends State<AgentWallet> {
                 ],
               ),
             )));
+  }
+
+  Widget _lotterList({required UserDetailModel user}) {
+    return Container(
+        margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+        child: Card(
+            color: AppColor.lightBlue,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                      child: const CircleAvatar(
+                    radius: 40,
+                    backgroundImage: NetworkImage("https://i.pravatar.cc/300"),
+                  )),
+                  Container(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          child: TextWidget(
+                            label: user.userProfile!.firstName.toString() +
+                                user.userProfile!.lastName.toString(),
+                            size: 14,
+                            color: AppColor.black,
+                          ),
+                        ),
+                        SizedBox(
+                          height: Get.height * 0.01,
+                        ),
+                        Container(
+                          child: TextWidget(
+                            label: user.userProfile!.phoneNumber.toString(),
+                            color: AppColor.black,
+                            size: 12,
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: Get.width * 0.03,
+                  ),
+                  Container(
+                    child: TextWidget(
+                      label: Formatting.formatDate(user.createdAt.toString()),
+                      color: AppColor.darkGray,
+                      size: 12,
+                    ),
+                  )
+                ],
+              ),
+            )));
+  }
+
+  handelSearchUser() {
+    Get.dialog(Scaffold(
+      appBar: AppBar(
+        title: TextWidget(
+          label: "እቁብ ጣይ",
+          size: 18,
+        ),
+      ),
+      body: Container(
+        child: Column(
+          children: [
+            SizedBox(
+              height: Get.height * 0.02,
+            ),
+            Container(
+              child: inputField(
+                  controller: _searchController,
+                  hint: "search by phone...",
+                  icon: Icons.search),
+            ),
+            ElevatedButton(
+                onPressed: () {
+                  if (_searchController.text.isNotEmpty) {
+                    _salesService.searchUser(_searchController.text);
+                    _searchController.clear();
+                  }
+                },
+                child: TextWidget(label: "Search")),
+            Obx(
+              () => Container(
+                  child: _salesService.searchResult == null
+                      ? TextWidget(label: "Search User")
+                      : GestureDetector(
+                          onTap: () {
+                            Get.back();
+                          },
+                          child: Container(
+                            child: _lotterList(
+                                user: _salesService.searchResult
+                                    as UserDetailModel),
+                          ),
+                        )),
+            )
+          ],
+        ),
+      ),
+    ));
   }
 
   Widget _cards({
