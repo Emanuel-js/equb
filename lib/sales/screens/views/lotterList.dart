@@ -303,10 +303,10 @@ class _SubCollectorLottScreenState extends State<LotterRegisteredList> {
                               userId: _salesService.searchResult!.id),
                           context);
                       if (_ticketService.isDrop) {
-                        _moneyController.clear();
-                        _timesController.clear();
                         _ticketService.isDrop = false;
                         _salesService.searchResult = null;
+                        _moneyController.clear();
+                        _timesController.clear();
                         Get.back();
                       }
                     }

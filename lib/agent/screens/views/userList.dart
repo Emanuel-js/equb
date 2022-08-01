@@ -132,6 +132,7 @@ class UserRegisteredList extends StatelessWidget {
                         Container(
                           child: TextWidget(
                             label: user.userProfile!.firstName.toString() +
+                                " " +
                                 user.userProfile!.lastName.toString(),
                             size: 14,
                             color: AppColor.black,

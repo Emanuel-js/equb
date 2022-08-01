@@ -6,8 +6,11 @@ import 'package:equb/theme/appColor.dart';
 import 'package:equb/theme/theme.dart';
 import 'package:equb/user/domain/models/dropTicketModel.dart';
 import 'package:equb/user/domain/models/ticketModel.dart';
+import 'package:equb/user/domain/models/updateTicktModel.dart';
 import 'package:equb/user/domain/services/ticketService.dart';
+import 'package:equb/utils/formating.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
@@ -27,6 +30,7 @@ class _UserDropScreenState extends State<UserDropScreen> {
   final _ticketService = Get.find<TicketService>();
   final _authService = Get.find<AuthService>();
 
+  DateTime selectedDate = DateTime.now();
   @override
   Widget build(BuildContext context) {
     _ticketService.getMyTicket(_authService.userInfo!.id.toString());
@@ -41,10 +45,6 @@ class _UserDropScreenState extends State<UserDropScreen> {
       tuesday.removeWhere((ticket) => ticket.id == toRemove.id);
     }
 
-    log("monday  $monday");
-    log("tuesday  $tuesday");
-    log("allTicket  $allTicket");
-
     return Scaffold(
         floatingActionButton: Container(
           child: Container(
@@ -52,7 +52,7 @@ class _UserDropScreenState extends State<UserDropScreen> {
             child: FloatingActionButton(
               heroTag: "transfer",
               onPressed: () {
-                dropLott();
+                dropLott(context);
               },
               child: Icon(
                 FontAwesomeIcons.vault,
@@ -108,41 +108,76 @@ class _UserDropScreenState extends State<UserDropScreen> {
                   color: AppColor.black,
                 ),
               ),
-              Center(
-                child: buildTarget(
-                  context,
-                  text: "",
-                  tickets: allTicket!,
-                  onAccept: (data) => setState(() {
-                    removeAll(data);
-                    allTicket.add(data);
-                  }),
-                ),
-              ),
+              Container(
+                child: Obx(
+                  () => ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: _ticketService.myLotto?.length,
+                      itemBuilder: (context, index) {
+                        final lotto = _ticketService.myLotto![index];
 
-              // Container(
-              //   child: Column(
-              //     children: [
-              //       buildTarget(context,
-              //           text: "Monday",
-              //           tickets: monday,
-              //           onAccept: (data) => setState(() {
-              //                 removeAll(data);
-              //                 monday.add(data);
-              //               })),
-              //       buildTarget(context,
-              //           text: "Tuesday",
-              //           tickets: tuesday,
-              //           onAccept: (data) => setState(() {
-              //                 removeAll(data);
-              //                 tuesday.add(data);
-              //               })),
-              //     ],
-              //   ),
-              // ),
+                        return Slidable(
+                          key: const ValueKey(0),
+                          startActionPane: ActionPane(
+                            motion: const ScrollMotion(),
+                            // dismissible: DismissiblePane(onDismissed: () {}),
+                            children: [
+                              // A SlidableAction can have an icon and/or a label.
+
+                              SlidableAction(
+                                onPressed: (context) {
+                                  _selectDate(lotto, context);
+                                },
+                                backgroundColor: const Color(0xFF7BC043),
+                                foregroundColor: Colors.white,
+                                icon: Icons.date_range,
+                                label: lotto.ticketIssuedDate,
+                              ),
+                            ],
+                          ),
+                          // endActionPane: ActionPane(
+                          //   motion: const ScrollMotion(),
+                          //   children: [
+                          //     SlidableAction(
+                          //       onPressed: (context) {},
+                          //       backgroundColor: const Color(0xFF7BC043),
+                          //       foregroundColor: Colors.white,
+                          //       icon: Icons.date_range,
+                          //       label: lotto.ticketIssuedDate,
+                          //     ),
+                          //   ],
+                          // ),
+                          child: SizedBox(child: tiketCard(lotto)),
+                        );
+                      }),
+                ),
+              )
             ],
           ),
         ));
+  }
+
+  changeLotDate(TicketModel data, ctx, picked) {
+    log(Formatting.formatDate(picked.toString()).toString());
+    _ticketService.updateTicket(
+        UpdateTicketModel(
+            id: data.id,
+            userId: data.userId,
+            ticketNumber: data.ticketNumber,
+            updatedDropDate:
+                Formatting.formatDate(picked.toString()).toString()),
+        ctx);
+  }
+
+  Future<void> _selectDate(TicketModel lotto, BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(DateTime.now().year),
+        lastDate: DateTime(2050));
+    if (picked != null && picked != selectedDate) {
+      changeLotDate(lotto, context, picked);
+    }
   }
 
   Widget tiketCard(TicketModel loto) {
@@ -269,7 +304,7 @@ class _UserDropScreenState extends State<UserDropScreen> {
     );
   }
 
-  dropLott() {
+  dropLott(BuildContext context) {
     Get.bottomSheet(SingleChildScrollView(
       child: Container(
         decoration: BoxDecoration(
@@ -296,26 +331,55 @@ class _UserDropScreenState extends State<UserDropScreen> {
               ),
               SizedBox(
                 width: Get.width * 0.8,
-                child: inputField(
-                    controller: _moneyController,
-                    hint: "የገንዘብ መጠን",
-                    keytype: TextInputType.number),
+                child: TextFormField(
+                  controller: _moneyController,
+                  keyboardType: TextInputType.number,
+                  validator: (v) {
+                    if (v!.isEmpty) {
+                      return "the amount is required";
+                    }
+                    if (int.parse(v) < 5) {
+                      return "the amount must be greater than 5";
+                    }
+                    if (int.parse(v) > 100) {
+                      return "the amount must be less than 100";
+                    }
+
+                    return null;
+                  },
+                  decoration:
+                      decoration("money amount", Icons.attach_money_sharp),
+                ),
               ),
               SizedBox(
                 height: Get.height * 0.05,
               ),
               SizedBox(
                 width: Get.width * 0.8,
-                child: inputField(
-                    controller: _timesController,
-                    hint: "የትኬት መጠን",
-                    keytype: TextInputType.number),
+                child: TextFormField(
+                  controller: _timesController,
+                  keyboardType: TextInputType.number,
+                  validator: (v) {
+                    if (v!.isEmpty) {
+                      return "the tikes is required";
+                    }
+                    if (int.parse(v) < 1) {
+                      return "the tikes must be at least 1";
+                    }
+                    if (int.parse(v) > 10) {
+                      return "tikes must be less than 10";
+                    }
+
+                    return null;
+                  },
+                  decoration: decoration("tikes amount", Icons.receipt),
+                ),
               ),
               SizedBox(
                 height: Get.height * 0.05,
               ),
               SizedBox(
-                width: Get.width * 0.9,
+                width: Get.width * 0.8,
                 child: ElevatedButton.icon(
                   style: ButtonStyle(
                       padding: MaterialStateProperty.all(EdgeInsets.symmetric(
@@ -324,12 +388,16 @@ class _UserDropScreenState extends State<UserDropScreen> {
                           borderRadius: BorderRadius.circular(15)))),
                   onPressed: () {
                     if (_globalKey.currentState!.validate()) {
-                      _ticketService.dropTicket(DropTicketModel(
-                          amount: double.parse(_moneyController.text),
-                          numberOfTickets: int.parse(_timesController.text),
-                          userId:
-                              int.parse(_authService.userInfo!.id.toString())));
-                      if (_ticketService.isLoading) {
+                      _ticketService.dropTicket(
+                          DropTicketModel(
+                              amount: double.parse(_moneyController.text),
+                              numberOfTickets: int.parse(_timesController.text),
+                              userId: int.parse(
+                                  _authService.userInfo!.id.toString())),
+                          context);
+                      if (_ticketService.isDrop) {
+                        _moneyController.clear();
+                        _timesController.clear();
                         Get.back();
                       }
                     }
@@ -351,6 +419,23 @@ class _UserDropScreenState extends State<UserDropScreen> {
     ));
   }
 
+  InputDecoration decoration(String hint, IconData icon) {
+    return InputDecoration(
+      prefixIcon: Container(
+          padding: const EdgeInsets.only(left: 10), child: Icon(icon)),
+      contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      labelText: hint,
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: AppColor.primaryColor),
+        borderRadius: BorderRadius.circular(25.0),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(25.0),
+        borderSide: BorderSide(color: AppColor.primaryColor),
+      ),
+    );
+  }
+
   Widget inputField(
       {required String hint,
       required TextEditingController controller,
@@ -362,7 +447,7 @@ class _UserDropScreenState extends State<UserDropScreen> {
       keyboardType: keytype,
       validator: (v) {
         if (v!.isEmpty) {
-          return "Please insret required filed";
+          return "Please insert required filed";
         }
         return null;
       },

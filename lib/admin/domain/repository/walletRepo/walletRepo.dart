@@ -1,3 +1,4 @@
+import 'package:equb/admin/domain/models/refund/refundApprovalModel.dart';
 import 'package:equb/admin/domain/models/refund/refundModel.dart';
 import 'package:equb/admin/domain/models/refund/refundRequestModel.dart';
 import 'package:equb/admin/domain/models/savingAccount/savingAccountModel.dart';
@@ -68,16 +69,14 @@ class WalletRepo {
     return result;
   }
 
-  // requestReFundApproval(RefundRequestApprovedModel data) async {
-  //   final connectivityResult = await (Connectivity().checkConnectivity());
-  //   if (connectivityResult == ConnectivityResult.none) {
-  //     MessageHandler().displayMessage(
-  //         msg: apiUtils.getNetworkError(), title: "Network Error");
-  //   }
+  requestReFundApproval(RefundRequestApprovedModel data) async {
+    try {
+      String url = Api.baseUrl + ApiEndPoints.requestApprove;
 
-  //   String url = Api.baseUrl + ApiEndPoints.requestApprove;
-
-  //   final response = await apiUtils.post(url: url, data: data.toMap());
-  //   return response.data;
-  // }
+      final response = await apiUtils.post(url: url, data: data.toMap());
+      return response.data;
+    } catch (e) {
+      return apiUtils.handleError(e);
+    }
+  }
 }

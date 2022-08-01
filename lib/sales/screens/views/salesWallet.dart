@@ -1,9 +1,12 @@
 import 'package:equb/admin/domain/models/transaction/transactionModel.dart';
 import 'package:equb/auth/service/authService.dart';
+import 'package:equb/commen/models/userDetailModel.dart';
 import 'package:equb/commen/screens/widgets/textWidget.dart';
 import 'package:equb/commen/services/walletService.dart';
 import 'package:equb/sales/domain/services/salesService.dart';
 import 'package:equb/theme/appColor.dart';
+import 'package:equb/theme/theme.dart';
+import 'package:equb/utils/formating.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -16,8 +19,8 @@ class SalesWallet extends StatefulWidget {
 }
 
 class _SalesWallet extends State<SalesWallet> {
-  final _walletController = Get.find<WalletService>();
-  final _authController = Get.find<AuthService>();
+  final _walletService = Get.find<WalletService>();
+  final _authService = Get.find<AuthService>();
   final _salesService = Get.find<SalesService>();
 
   final _amountController = TextEditingController();
@@ -25,13 +28,14 @@ class _SalesWallet extends State<SalesWallet> {
   final _phoneController = TextEditingController();
 
   final _remarkController = TextEditingController();
+  final _searchController = TextEditingController();
 
   final _globalKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
-    _walletController
-        .getTransactionHistory(_authController.userInfo!.id.toString());
+    _walletService.getTransactionHistory(_authService.userInfo!.id.toString());
+
     return Scaffold(
       floatingActionButton: FloatingActionButton(
           heroTag: "transferto",
@@ -41,7 +45,7 @@ class _SalesWallet extends State<SalesWallet> {
             color: AppColor.white,
           ),
           onPressed: () {
-            transfer();
+            transfer(context);
           }),
       body: Column(
         children: [
@@ -76,18 +80,13 @@ class _SalesWallet extends State<SalesWallet> {
                       )),
                   backgroundColor: AppColor.darkBlue,
                   elevation: 0,
-                  actions: [
-                    Container(
-                        margin: const EdgeInsets.only(right: 20, top: 20),
-                        child: TextWidget(label: "Wallet"))
-                  ],
                 ),
               ),
               Container(
                 margin: EdgeInsets.only(
-                    left: 25.0, right: 15.0, top: Get.height * 0.18),
+                    left: 30.0, right: 15.0, top: Get.height * 0.18),
                 child: TextWidget(
-                  label: "My Account: ${_walletController.myWallet?.account}",
+                  label: "ገንዘብን ወደ ሻጭ ያስተላልፉ",
                   color: AppColor.white,
                 ),
               ),
@@ -98,9 +97,11 @@ class _SalesWallet extends State<SalesWallet> {
                   children: [
                     Obx(
                       () => _cards(
-                          title: "Wallet Balance",
-                          data: "${_walletController.myWallet?.balance} ETB",
-                          icon: FontAwesomeIcons.wallet),
+                        title: "ጠቅላላ የተላለፈ ገንዘብ",
+                        data: _walletService.myWallet!.balance.toString() +
+                            "" +
+                            "ETB".tr,
+                      ),
                     ),
                   ],
                 ),
@@ -111,17 +112,17 @@ class _SalesWallet extends State<SalesWallet> {
             alignment: Alignment.centerLeft,
             margin: const EdgeInsets.only(left: 20, top: 10),
             child: TextWidget(
-              label: "Transaction History",
+              label: "የግብይት መዝገቦች",
               color: AppColor.black,
             ),
           ),
           Obx(() => Expanded(
               child: ListView.builder(
-                  itemCount: _walletController.myTransaction?.length,
+                  itemCount: _walletService.myTransaction?.length,
                   itemBuilder: (BuildContext ctxt, int index) {
-                    var transaction = _walletController.myTransaction![index];
+                    var transaction = _walletService.myTransaction![index];
                     return _transactionList(
-                        id: transaction.senderAccount,
+                        id: transaction.receiverAccount,
                         phone: "09191919",
                         amount: transaction.amount,
                         date: transaction.transactionDate,
@@ -132,14 +133,15 @@ class _SalesWallet extends State<SalesWallet> {
     );
   }
 
-  transfer() {
+  transfer(BuildContext context) {
     Get.bottomSheet(SafeArea(
       child: SingleChildScrollView(
         child: Form(
           key: _globalKey,
           child: Container(
-            color:
-                _authController.isDarkMode ? AppColor.darkBlue : AppColor.white,
+            color: _authService.isDarkMode
+                ? AppTheme.darkTheme.backgroundColor
+                : AppTheme.lightTheme.backgroundColor,
             height: Get.height * 0.5,
             child: Column(
               children: [
@@ -161,19 +163,64 @@ class _SalesWallet extends State<SalesWallet> {
                   margin: EdgeInsets.only(left: Get.width * 0.057),
                   alignment: Alignment.centerLeft,
                   child: TextWidget(
-                    label: "Transaction",
+                    label: "ግብይት",
                     color: AppColor.black,
                   ),
                 ),
-
                 SizedBox(
                   height: Get.height * 0.02,
                 ),
                 SizedBox(
                   width: Get.width * 0.9,
+                  child: ElevatedButton.icon(
+                    icon: Icon(
+                      Icons.person,
+                      color: AppColor.darkGray,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColor.lightBlue),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 20, horizontal: 10),
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(15))),
+                    ),
+                    onPressed: () {
+                      {
+                        handelSearchUser();
+                      }
+                    },
+                    label: Container(
+                      alignment: Alignment.centerLeft,
+                      margin: const EdgeInsets.only(left: 10),
+                      child: Obx(
+                        () => TextWidget(
+                          label: _salesService.searchResult == null
+                              ? "እቁብ ጣይ"
+                              : _salesService
+                                      .searchResult!.userProfile!.firstName
+                                      .toString() +
+                                  " " +
+                                  _salesService
+                                      .searchResult!.userProfile!.lastName
+                                      .toString(),
+                          txa: TextAlign.start,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: Get.height * 0.02,
+                ),
+
+                SizedBox(
+                  width: Get.width * 0.9,
                   child: inputField(
-                      keytype: TextInputType.number,
                       controller: _amountController,
+                      keytype: TextInputType.number,
                       hint: "የገንዘብ መጠን",
                       icon: FontAwesomeIcons.moneyBillWave),
                 ),
@@ -193,7 +240,7 @@ class _SalesWallet extends State<SalesWallet> {
                 SizedBox(
                   width: Get.width * 0.9,
                   child: Obx(
-                    () => _walletController.isLoading
+                    () => _walletService.isLoading
                         ? SizedBox(
                             height: Get.height * 0.05,
                             child: const Center(
@@ -211,20 +258,24 @@ class _SalesWallet extends State<SalesWallet> {
                                             BorderRadius.circular(15)))),
                             onPressed: () {
                               if (_globalKey.currentState!.validate()) {
-                                _walletController
-                                    .transferToUser(TransactionModel(
-                                  amount: double.parse(_amountController.text),
-                                  receiverAccount:
-                                      _salesService.searchResult!.id,
-                                  senderAccount:
-                                      _walletController.myWallet!.userId,
-                                ));
+                                _walletService.transferToUser(
+                                    TransactionModel(
+                                      amount:
+                                          double.parse(_amountController.text),
+                                      receiverAccount:
+                                          _salesService.searchResult!.id,
+                                      senderAccount:
+                                          _walletService.myWallet!.userId,
+                                    ),
+                                    context);
                               }
-                              if (_walletController.isLoading) {
+                              if (_walletService.isRefund) {
                                 _amountController.clear();
-                                _phoneController.clear();
                                 _salesService.searchResult = null;
+                                _walletService.isRefund = false;
                                 Get.back();
+                                _walletService.getTransactionHistory(
+                                    _authService.userInfo!.id.toString());
                               }
                             },
                             label: TextWidget(
@@ -254,7 +305,7 @@ class _SalesWallet extends State<SalesWallet> {
       keyboardType: keytype,
       validator: (v) {
         if (v!.isEmpty) {
-          return "Please insret required filed";
+          return "አስፈላጊውን ፋይል ያስገቡ";
         }
         return null;
       },
@@ -266,11 +317,11 @@ class _SalesWallet extends State<SalesWallet> {
         labelText: hint,
         focusedBorder: OutlineInputBorder(
           borderSide: BorderSide(color: AppColor.primaryColor),
-          borderRadius: BorderRadius.circular(25.0),
+          borderRadius: BorderRadius.circular(15.0),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(25.0),
-          borderSide: BorderSide(color: AppColor.primaryColor),
+          borderRadius: BorderRadius.circular(15.0),
+          borderSide: BorderSide(color: AppColor.lightBlue),
         ),
       ),
     );
@@ -314,7 +365,7 @@ class _SalesWallet extends State<SalesWallet> {
                         ),
                         Container(
                           child: TextWidget(
-                            label: id == _authController.userInfo!.id
+                            label: id != _authService.userInfo!.id
                                 ? "- " + amount.toString()
                                 : "+ " + amount.toString(),
                             color: AppColor.black,
@@ -344,7 +395,7 @@ class _SalesWallet extends State<SalesWallet> {
                         Container(
                           child: TextWidget(
                             label: Trnsactiontype.toString(),
-                            color: _authController.userInfo!.id == id
+                            color: _authService.userInfo!.id == id
                                 ? AppColor.black
                                 : AppColor.purple,
                             size: 12,
@@ -358,10 +409,117 @@ class _SalesWallet extends State<SalesWallet> {
             )));
   }
 
+  Widget _lotterList({required UserDetailModel user}) {
+    return Container(
+        margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+        child: Card(
+            color: AppColor.lightBlue,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                      child: const CircleAvatar(
+                    radius: 40,
+                    backgroundImage: NetworkImage("https://i.pravatar.cc/300"),
+                  )),
+                  Container(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          child: TextWidget(
+                            label: user.userProfile!.firstName.toString() +
+                                user.userProfile!.lastName.toString(),
+                            size: 14,
+                            color: AppColor.black,
+                          ),
+                        ),
+                        SizedBox(
+                          height: Get.height * 0.01,
+                        ),
+                        Container(
+                          child: TextWidget(
+                            label: user.userProfile!.phoneNumber.toString(),
+                            color: AppColor.black,
+                            size: 12,
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: Get.width * 0.03,
+                  ),
+                  Container(
+                    child: TextWidget(
+                      label: Formatting.formatDate(user.createdAt.toString()),
+                      color: AppColor.darkGray,
+                      size: 12,
+                    ),
+                  )
+                ],
+              ),
+            )));
+  }
+
+  handelSearchUser() {
+    Get.dialog(Scaffold(
+      appBar: AppBar(
+        title: TextWidget(
+          label: "እቁብ ጣይ",
+          size: 18,
+        ),
+      ),
+      body: Container(
+        child: Column(
+          children: [
+            SizedBox(
+              height: Get.height * 0.02,
+            ),
+            Container(
+              child: inputField(
+                  controller: _searchController,
+                  hint: "search by phone...",
+                  icon: Icons.search),
+            ),
+            ElevatedButton(
+                onPressed: () {
+                  if (_searchController.text.isNotEmpty) {
+                    _salesService.searchUser(_searchController.text);
+                    _searchController.clear();
+                  }
+                },
+                child: TextWidget(label: "Search")),
+            Obx(
+              () => Container(
+                  child: _salesService.searchResult == null
+                      ? TextWidget(label: "Search User")
+                      : GestureDetector(
+                          onTap: () {
+                            Get.back();
+                          },
+                          child: Container(
+                            child: _lotterList(
+                                user: _salesService.searchResult
+                                    as UserDetailModel),
+                          ),
+                        )),
+            )
+          ],
+        ),
+      ),
+    ));
+  }
+
   Widget _cards({
     required String title,
     required String data,
-    required IconData icon,
+    IconData? icon,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 10),
@@ -399,19 +557,7 @@ class _SalesWallet extends State<SalesWallet> {
                 ),
               ),
               SizedBox(
-                width: Get.width * 0.25,
-              ),
-              Expanded(
-                child: Container(
-                  child: Icon(
-                    icon,
-                    color: AppColor.white,
-                    size: 40,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                width: 1,
+                width: Get.width * 0.2,
               ),
             ],
           ),

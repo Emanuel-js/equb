@@ -45,7 +45,7 @@ class _MainCollectorWalletScreenState extends State<AgentWallet> {
             color: AppColor.white,
           ),
           onPressed: () {
-            transfer();
+            transfer(context);
           }),
       body: Column(
         children: [
@@ -133,7 +133,7 @@ class _MainCollectorWalletScreenState extends State<AgentWallet> {
     );
   }
 
-  transfer() {
+  transfer(BuildContext context) {
     Get.bottomSheet(SafeArea(
       child: SingleChildScrollView(
         child: Form(
@@ -218,11 +218,21 @@ class _MainCollectorWalletScreenState extends State<AgentWallet> {
 
                 SizedBox(
                   width: Get.width * 0.9,
-                  child: inputField(
-                      controller: _amountController,
-                      keytype: TextInputType.number,
-                      hint: "የገንዘብ መጠን",
-                      icon: FontAwesomeIcons.moneyBillWave),
+                  child: TextFormField(
+                    controller: _amountController,
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      if (int.parse(v!) <= 0) {
+                        return "amount must be greater than 0";
+                      }
+                      if (v.isEmpty) {
+                        return "amount is required";
+                      }
+                      return null;
+                    },
+                    decoration:
+                        decoration("Amount", Icons.attach_money_outlined),
+                  ),
                 ),
                 SizedBox(
                   height: Get.height * 0.02,
@@ -258,19 +268,25 @@ class _MainCollectorWalletScreenState extends State<AgentWallet> {
                                             BorderRadius.circular(15)))),
                             onPressed: () {
                               if (_globalKey.currentState!.validate()) {
-                                _walletService.transferToUser(TransactionModel(
-                                  amount: double.parse(_amountController.text),
-                                  receiverAccount:
-                                      _salesService.searchResult!.id,
-                                  senderAccount:
-                                      _walletService.myWallet!.userId,
-                                ));
+                                _walletService.transferToUser(
+                                    TransactionModel(
+                                      amount:
+                                          double.parse(_amountController.text),
+                                      receiverAccount:
+                                          _salesService.searchResult!.id,
+                                      senderAccount:
+                                          _walletService.myWallet!.userId,
+                                    ),
+                                    context);
                               }
                               if (_walletService.isRefund) {
+                                _walletService.getTransactionHistory(
+                                    _authService.userInfo!.id.toString());
+
                                 _amountController.clear();
                                 _salesService.searchResult = null;
-                                Get.back();
                                 _walletService.isRefund = false;
+                                Get.back();
                               }
                             },
                             label: TextWidget(
@@ -322,6 +338,23 @@ class _MainCollectorWalletScreenState extends State<AgentWallet> {
     );
   }
 
+  InputDecoration decoration(String hint, IconData icon) {
+    return InputDecoration(
+      prefixIcon: Container(
+          padding: const EdgeInsets.only(left: 10), child: Icon(icon)),
+      contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      labelText: hint,
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: AppColor.primaryColor),
+        borderRadius: BorderRadius.circular(15.0),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15.0),
+        borderSide: BorderSide(color: AppColor.lightBlue),
+      ),
+    );
+  }
+
   Widget _transactionList(
       {String? phone,
       double? amount,
@@ -360,7 +393,7 @@ class _MainCollectorWalletScreenState extends State<AgentWallet> {
                         ),
                         Container(
                           child: TextWidget(
-                            label: id == _authService.userInfo!.id
+                            label: id != _authService.userInfo!.id
                                 ? "- " + amount.toString()
                                 : "+ " + amount.toString(),
                             color: AppColor.black,

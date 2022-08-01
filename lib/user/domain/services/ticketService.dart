@@ -4,6 +4,7 @@ import 'package:equb/auth/service/authService.dart';
 import 'package:equb/commen/screens/widgets/loadingScreen.dart';
 import 'package:equb/user/domain/models/dropTicketModel.dart';
 import 'package:equb/user/domain/models/ticketModel.dart';
+import 'package:equb/user/domain/models/updateTicktModel.dart';
 import 'package:equb/user/domain/repository/ticketRepo.dart';
 import 'package:equb/utils/messageHander.dart';
 import 'package:get/get.dart';
@@ -26,21 +27,21 @@ class TicketService extends GetxController {
     // _isLoading(true);
   }
 
-  void dropTicket(DropTicketModel data) async {
-    setLoading(true);
+  void dropTicket(DropTicketModel data, ctx) async {
+    LoadingScreen.loading(ctx);
     try {
       final result = await TicketRepo().dropTicket(data);
-      log(result.toString());
+
       if (result != null) {
-        getMyTicket(_authService.userInfo!.id.toString());
-        _isDrop.value = true;
         MessageHandler().displayMessage(msg: "drop success", title: "Drop");
-        setLoading(false);
+        _isDrop.value = true;
+        getMyTicket(_authService.userInfo!.id.toString());
+        LoadingScreen.closeLoading(ctx);
       } else {
-        setLoading(false);
+        LoadingScreen.closeLoading(ctx);
       }
     } catch (e) {
-      setLoading(false);
+      LoadingScreen.closeLoading(ctx);
     }
   }
 
@@ -68,6 +69,26 @@ class TicketService extends GetxController {
       _mylotto.value = result;
     } catch (e) {
       log("message$e");
+    }
+  }
+
+  void updateTicket(UpdateTicketModel data, ctx) async {
+    // LoadingScreen.loading(ctx);
+    try {
+      final result = await TicketRepo().updateTicket(data);
+
+      if (result != null) {
+        _isDrop.value = true;
+        getMyTicket(data.userId.toString());
+        MessageHandler().displayMessage(
+            msg: "Ticket Date Updated to ${data.updatedDropDate}",
+            title: "Drop");
+        // LoadingScreen.closeLoading(ctx);
+      } else {
+        LoadingScreen.closeLoading(ctx);
+      }
+    } catch (e) {
+      // LoadingScreen.closeLoading(ctx);
     }
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:equb/admin/domain/models/refund/refundApprovalModel.dart';
 import 'package:equb/admin/domain/models/refund/refundModel.dart';
 import 'package:equb/admin/domain/models/refund/refundRequestModel.dart';
 import 'package:equb/admin/domain/models/savingAccount/savingAccountModel.dart';
@@ -8,6 +9,7 @@ import 'package:equb/admin/domain/models/transaction/transactionResponceModel.da
 import 'package:equb/admin/domain/models/wallet/walletModel.dart';
 import 'package:equb/admin/domain/repository/walletRepo/walletRepo.dart';
 import 'package:equb/auth/service/authService.dart';
+import 'package:equb/commen/screens/widgets/loadingScreen.dart';
 import 'package:equb/utils/messageHander.dart';
 import 'package:get/get.dart';
 
@@ -37,22 +39,23 @@ class WalletService extends GetxController {
     // _isLoading(true);
   }
 
-  void transferToUser(TransactionModel data) async {
-    setLoading(true);
+  void transferToUser(TransactionModel data, ctx) async {
+    LoadingScreen.loading(ctx);
     try {
       final result = await WalletRepo().transferToUser(data);
-      if (result != null) {
+      if (result["id"] != null) {
+        _isRefund.value = true;
         MessageHandler()
             .displayMessage(msg: "Transaction is Done", title: "Transaction");
-        setLoading(false);
+        LoadingScreen.closeLoading(ctx);
         getWalletAccount(_authService.userInfo!.id.toString());
-
-        _isRefund.value = true;
+        getSavingBalance(_authService.userInfo!.id.toString());
+        getTransactionHistory(_authService.userInfo!.id.toString());
       } else {
-        setLoading(false);
+        LoadingScreen.closeLoading(ctx);
       }
     } catch (e) {
-      setLoading(false);
+      LoadingScreen.closeLoading(ctx);
     }
   }
 
@@ -68,6 +71,7 @@ class WalletService extends GetxController {
         setLoading(false);
         getWalletAccount(_authService.userInfo!.id.toString());
         getSavingBalance(_authService.userInfo!.id.toString());
+        getTransactionHistory(_authService.userInfo!.id.toString());
       } else {
         setLoading(false);
       }
@@ -134,24 +138,21 @@ class WalletService extends GetxController {
     }
   }
 
-  // void requestRefundApproval(RefundRequestApprovedModel data) async {
-  //   setLoading(true);
-  //   Get.defaultDialog(
-  //       title: "Approve Refund", content: TextWidget(label: "Approving..."));
-  //   try {
-  //     final result = await WalletRepo().requestReFundApproval(data);
-  //     log(result.toString());
-  //     if (result["id"] != null) {
-  //       MessageHandler()
-  //           .displayMessage(msg: "Refund Approved!", title: "Request");
-  //       setLoading(false);
-  //       Get.back();
-  //       _isRefund.value = true;
-  //     } else {
-  //       setLoading(false);
-  //     }
-  //   } catch (e) {
-  //     setLoading(false);
-  //   }
-  // }
+  void requestRefundApproval(
+      RefundRequestApprovedModel data, ctx, message) async {
+    LoadingScreen.loading(ctx);
+    try {
+      final result = await WalletRepo().requestReFundApproval(data);
+      log(result.toString());
+      if (result["id"] != null) {
+        MessageHandler().displayMessage(msg: message, title: "Refund");
+        LoadingScreen.closeLoading(ctx);
+        _isRefund.value = true;
+      } else {
+        LoadingScreen.closeLoading(ctx);
+      }
+    } catch (e) {
+      LoadingScreen.closeLoading(ctx);
+    }
+  }
 }

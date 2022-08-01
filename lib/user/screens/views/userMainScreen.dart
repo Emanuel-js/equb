@@ -29,12 +29,10 @@ class _UserMainScreenState extends State<UserMainScreen> {
     const UserWalletScreen(),
     const UserDropScreen()
   ];
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
+
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      _navingationService.navIndex = index;
-    });
+    _navingationService.navIndex = index;
   }
 
   @override
@@ -43,7 +41,9 @@ class _UserMainScreenState extends State<UserMainScreen> {
     _walletService.getWalletAccount(_authService.userInfo!.id.toString());
 
     return Scaffold(
-      body: Obx(() => _widgetOptions.elementAt(_navingationService.navIndex)),
+      body: Obx(
+        () => _widgetOptions.elementAt(_navingationService.navIndex),
+      ),
       bottomNavigationBar: Container(
           child: Container(
         // margin: const EdgeInsets.all(10),
@@ -56,9 +56,10 @@ class _UserMainScreenState extends State<UserMainScreen> {
             TabData(iconData: FontAwesomeIcons.wallet, title: "Wallet".tr),
             TabData(iconData: FontAwesomeIcons.piggyBank, title: "Drop".tr)
           ],
+          streamController: _navingationService.streamController,
+          initialSelection: _navingationService.navIndex,
           onTabChangedListener: (position) {
             _navingationService.navIndex = position;
-            _selectedIndex = position;
           },
         ),
       )),

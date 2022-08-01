@@ -92,7 +92,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     Obx(
                       () => card(
                           onClick: () {
-                            // _navService.navIndex = 1;
+                            _navService.navIndex = 1;
                           },
                           data: "${_ticketService.myLotto?.length}",
                           icon: FontAwesomeIcons.receipt,
@@ -103,7 +103,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     Obx(
                       () => card(
                           onClick: () {
-                            // _navService.navIndex = 1;
+                            _navService.navIndex = 2;
                           },
                           data:
                               "${_walletService.myWallet?.balance} " + "ETB".tr,

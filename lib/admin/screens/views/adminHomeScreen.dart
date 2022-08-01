@@ -1,10 +1,12 @@
 import 'package:equb/admin/domain/services/adminService.dart';
 import 'package:equb/admin/screens/views/adminProfileScreen.dart';
 import 'package:equb/admin/screens/views/adminWallet.dart';
+import 'package:equb/admin/screens/views/notification/refundNotification/refundReqest.dart';
 import 'package:equb/admin/screens/views/userList/adminRegisterd.dart';
 import 'package:equb/admin/screens/views/registration/salesRegister.dart';
 import 'package:equb/auth/service/authService.dart';
 import 'package:equb/commen/screens/widgets/textWidget.dart';
+import 'package:equb/commen/services/walletService.dart';
 import 'package:equb/theme/appColor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -14,12 +16,12 @@ import 'package:get/get.dart';
 class AdminHomeScreen extends StatelessWidget {
   AdminHomeScreen({Key? key}) : super(key: key);
   final _autController = Get.find<AuthService>();
-  // final _walletController = Get.find<WalletController>();
+  final _walletController = Get.find<WalletService>();
   final _adminController = Get.find<AdminService>();
   @override
   Widget build(BuildContext context) {
-    // _autController.getMyUsers();
-    // _walletController.getReqRefunds();
+    _autController.getMyUsers();
+    _walletController.getReqRefunds();
     _adminController.getAnalytics();
     Future<bool> _onWillPop() async {
       return (await showDialog(
@@ -74,7 +76,7 @@ class AdminHomeScreen extends StatelessWidget {
                         ),
                         onPressed: () {
                           //todo admin notification
-                          // Get.to(() => const AdminNotification());
+                          Get.to(() => const AdminNotification());
                         },
                       ),
                     ),

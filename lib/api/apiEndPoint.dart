@@ -25,12 +25,13 @@ class ApiEndPoints {
   static const createDropTickets = "lotto/createDropTickets";
   static const dropTicketForClient = "lotto/createDropTicketsForClient";
   static const getCreatedTickets = "lotto/GetAllMyTickets/";
+  static const updateTicketDate = "lotto/updateLottoTicketDropDate";
 
   static const getMyUsers = "common/getAllMyUsers";
 
   static const requestRefund = "refund/requestRefund";
   static const getReqRefund = "refund/getAllRefundRequests";
-  // static const requestApprove = "refund/approveRefundRequest";
+  static const requestApprove = "refund/approveRefundRequest";
   // static const searchUser =
   // "subCollector/searchClientByUserNameOrPhoneNumberOrEmail";
 }

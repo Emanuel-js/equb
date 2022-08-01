@@ -44,7 +44,7 @@ class LocalizationService extends Translations {
           "Password": "Password",
           "Are you sure?": "Are you sure?",
           "Do you want to exit an App": "Do you want to exit an App",
-          "Total lot": "total lot",
+          "Total lot": "Total lot",
           "Total lot you have": "Total lot you have",
           "Saving amount you have": "Saving amount you have",
           "Saving amount": "Saving amount",
@@ -79,9 +79,9 @@ class LocalizationService extends Translations {
           "Welcome": "Welcome",
           //todo admin
           "Register New Sales": "Register New Sales",
-          "Total users account": "Total saving users account",
+          "Total users account": "Total saving account",
           "Saving account": "Saving account",
-          "Total Collector Account": "Total Collector User Account",
+          "Total Collector Account": "Total Collector Account",
           "Collectors": "Collectors",
           "Salesperson user account": "Salesperson user account",
           "Sales": "Sales"

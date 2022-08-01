@@ -279,7 +279,7 @@ class _UserWalletScreenState extends State<UserWalletScreen> {
                         ),
                         Container(
                           child: TextWidget(
-                            label: id == _authService.userInfo!.id
+                            label: id != _authService.userInfo!.id
                                 ? "- " + amount.toString()
                                 : "+ " + amount.toString(),
                             color: AppColor.black,
